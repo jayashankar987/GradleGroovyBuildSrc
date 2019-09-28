@@ -1,0 +1,103 @@
+apply plugin: 'com.android.application'
+
+apply plugin: 'kotlin-android'
+
+apply plugin: 'kotlin-android-extensions'
+
+apply plugin: 'kotlin-kapt'
+
+android {
+    compileSdkVersion rootProject.compileSdkVersion
+    defaultConfig {
+        applicationId "com.jay.sample.gradlegroovy"
+        minSdkVersion rootProject.minSdkVersion
+        targetSdkVersion rootProject.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    flavorDimensions "app"
+
+    productFlavors {
+        Meetup {
+            applicationId = "com.devs.meetup.demo"
+            manifestPlaceholders = [appIcon: "@mipmap/ic_launcher"]
+        }
+
+        MyBuild {
+            applicationId = "com.jay.sample.demo"
+            manifestPlaceholders = [appIcon: "@mipmap/ic_launcher_round"]
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+
+        debug {
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    sourceSets {
+        //getByName("Meetup").res.srcDirs("src/Meetup/res")
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${Versions.kotlin_version}"
+    //implementation "androidx.appcompat:appcompat:1.1.0"
+    implementation Deps.androidx.appcompat
+    implementation "androidx.core:core-ktx:$androidx_version"
+    implementation "androidx.constraintlayout:constraintlayout:$constraint_layout_version"
+    testImplementation "junit:junit:$junit_version"
+    androidTestImplementation "androidx.test:runner:$androidx_test_runner_version"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidx_espresso_version"
+
+}
+
+kapt {
+    useBuildCache true
+}
+
+tasks.whenTaskAdded { task ->
+    if (task.name == 'Meetup' || task.name == 'MyBuild') {
+        task.finalizedBy 'generateApk'
+    }
+}
+
+task generateApk {
+    doLast {
+        android.applicationVariants.all { variant ->
+            variant.outputs.each { output ->
+                if (variant.isSigningReady() && variant.buildType.name == "release") {
+                    File fileRelease = output.outputFile;
+                    File destDir = new File(System.getenv("APK_OUTPUT_FOLDER") + env)
+                    print "APK file - " + fileRelease.toString()
+                    copy {
+                        from fileRelease.toString()
+                        into destDir.toString()
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+tasks.whenTaskAdded { task ->
+    println(task.name)
+}
+
+
